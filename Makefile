@@ -1,36 +1,40 @@
-# Compiler
-CXX = g++
 
-# Compiler flags
-CXXFLAGS = -Wall -g
+CXX = clang++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+
+# Project directories
+CORE_DIR = ygopro-core
+CORE_LIB_DIR = $(CORE_DIR)/bin/release
+
+# Include directories
+INCLUDES = -I$(CORE_DIR)
+
+# Library configuration
+LDFLAGS = -L$(CORE_LIB_DIR) \
+          -Wl,-rpath,@executable_path/$(CORE_LIB_DIR)
+
+LIBS = -locgcore
 
 # Target executable
 TARGET = interface-test
 
-# For deleting the target
-TARGET_DEL = interface-test
-
 # Source files
-SRCS = interface-test.cpp
+SOURCES = interface-test.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
 
-# Object files
-OBJS = $(SRCS:.cpp=.o)
+.PHONY: all clean run
 
-# Default rule to build and run the executable
-#all: $(TARGET) run
+all: $(TARGET)
 
-# Rule to link object files into the target executable
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+$(TARGET): $(OBJECTS)
+	$(CXX) $(OBJECTS) $(LDFLAGS) $(LIBS) -o $(TARGET)
 
-# Rule to compile .cpp files into .o files
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Rule to run the executable
 run: $(TARGET)
 	./$(TARGET)
 
-# Clean rule to remove generated files
 clean:
-	rm -f $(TARGET_DEL) $(OBJS)
+	rm -f $(OBJECTS) $(TARGET)
+
