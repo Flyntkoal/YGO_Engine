@@ -13,7 +13,7 @@ INCLUDES = -I$(CORE_DIR)
 LDFLAGS = -L$(CORE_LIB_DIR) \
           -Wl,-rpath,@executable_path/$(CORE_LIB_DIR)
 
-LIBS = -locgcore
+LIBS = -locgcore -lsqlite3
 
 # Target executable
 TARGET = interface-test
