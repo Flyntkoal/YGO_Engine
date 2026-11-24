@@ -15,9 +15,6 @@ const std::string SCRIPT_PATH  = "CardScripts/";
 std::vector<std::string> scriptDirectories = {
     "CardScripts/official/",
     "CardScripts/pre-errata/",
-    "CardScripts/pre-release/",
-    "CardScripts/skill/",
-    "CardScripts/rush/"
 };
 const uint32_t STARTING_LP = 8000;
 const uint32_t STARTING_DRAW_COUNT = 5;
@@ -147,8 +144,6 @@ void cardReader(void* payload, uint32_t code, OCG_CardData* data)
         data->attribute = static_cast<uint32_t>(
             sqlite3_column_int64(statement, 7));
 
-        std::cout << "[CARD] Loaded card: "
-                  << code << std::endl;
     }
     else
     {
@@ -193,8 +188,6 @@ int scriptReader(void* payload, OCG_Duel duel, const char* name)
 
             if (file.is_open())
             {
-                std::cout << "[SCRIPT] found script: "
-                          << path << std::endl;
                 foundFile = true;
                 break;
             }
@@ -202,8 +195,6 @@ int scriptReader(void* payload, OCG_Duel duel, const char* name)
 
         if (!foundFile)
         {
-            std::cerr << "[SCRIPT] Could not find script: "
-                      << name << std::endl;
             return 0;
         }
     }
@@ -212,10 +203,6 @@ int scriptReader(void* payload, OCG_Duel duel, const char* name)
         (std::istreambuf_iterator<char>(file)),
         std::istreambuf_iterator<char>()
     );
-
-    std::cout << "[SCRIPT] Loading: "
-              << name << " (" << script.size()
-              << " bytes)" << std::endl;
 
     if (script.empty())
     {
@@ -290,9 +277,6 @@ OCG_Duel create_duel(DuelContext& context)
         return nullptr;
     }
 
-    std::cout << "[DATABASE] Successfully opened: "
-              << context.cardDatabasePath << std::endl;
-
     OCG_Duel duel = nullptr;
 
     OCG_DuelOptions options{};
@@ -342,8 +326,6 @@ OCG_Duel create_duel(DuelContext& context)
         return nullptr;
     }
 
-    std::cout << "Duel successfully created!" << std::endl;
-
     if(!LoadLuaFile(duel, "CardScripts/constant.lua")){
         std::cerr << "[CREATE DUEL] Can't find constant.lua" << std::endl;
     }
@@ -386,6 +368,32 @@ void load_deck(std::vector<std::vector<uint32_t>> deck, uint32_t player, OCG_Due
     }
 }
 
+void start_duel(OCG_Duel duel){
+    OCG_StartDuel(duel);
+}
+
+int process_duel(OCG_Duel duel){
+    return OCG_DuelProcess(duel);
+}
+
+void get_message(OCG_Duel duel){
+    uint32_t length = 0;
+
+    auto* message = static_cast<const uint8_t*>(
+        OCG_DuelGetMessage(duel, &length)
+    );
+
+    if (message && length > 0)
+        {
+            for (uint32_t j = 0; j < length; ++j)
+            {
+                printf("%02X ", message[j]);
+            }
+
+            printf("\n");
+        }
+}
+
 void destroy_duel(OCG_Duel duel, DuelContext& context)
 {
     if (duel)
@@ -395,5 +403,39 @@ void destroy_duel(OCG_Duel duel, DuelContext& context)
     {
         sqlite3_close(context.cardDatabase);
         context.cardDatabase = nullptr;
+    }
+}
+
+void diagnostic_test(OCG_Duel duel){
+    OCG_StartDuel(duel);
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int status = OCG_DuelProcess(duel);
+
+        uint32_t length = 0;
+        auto* message = static_cast<const uint8_t*>(
+            OCG_DuelGetMessage(duel, &length)
+        );
+
+        std::cout << "\n--- Process iteration " << i << " ---\n";
+        std::cout << "Status: " << status << '\n';
+        std::cout << "Message length: " << length << '\n';
+
+        if (message && length > 0)
+        {
+            for (uint32_t j = 0; j < length; ++j)
+            {
+                printf("%02X ", message[j]);
+            }
+
+            printf("\n");
+        }
+
+        if (status == OCG_DUEL_STATUS_END ||
+            status == OCG_DUEL_STATUS_AWAITING)
+        {
+            break;
+        }
     }
 }

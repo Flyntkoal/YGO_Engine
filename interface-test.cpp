@@ -11,6 +11,10 @@ int main() {
     }
     load_deck(YUGI_KAIBA_BEAT, 0, cur_duel);
     load_deck(YUGI_KAIBA_BEAT, 1, cur_duel);
+    //diagnostic_test(cur_duel);
+    start_duel(cur_duel);
+    std::cout << process_duel(cur_duel) << std::endl;
+    get_message(cur_duel);
     destroy_duel(cur_duel, context);
 
     return 0;
