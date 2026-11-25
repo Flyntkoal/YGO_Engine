@@ -6,6 +6,8 @@
 #include <cstring>
 #include <sqlite3.h>
 #include <iterator>
+#include <random>
+#include <numeric>
 
 #include "ocgapi.h"
 #include "ocgapi_constants.h"
@@ -51,6 +53,16 @@ bool LoadLuaFile(OCG_Duel duel, const std::string& path) {
         path.c_str()
     ) > 0;
 } 
+
+std::vector<int> initial_shuffle(std::size_t size)
+{
+    std::vector<int> result(size);
+    std::iota(result.begin(), result.end(), 0);
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::shuffle(result.begin(), result.end(), gen);
+    return result;
+}
 
 void cardReader(void* payload, uint32_t code, OCG_CardData* data)
 {
@@ -339,12 +351,15 @@ OCG_Duel create_duel(DuelContext& context)
 }
 
 void load_deck(std::vector<std::vector<uint32_t>> deck, uint32_t player, OCG_Duel duel){
+    std::vector<int> main_order = initial_shuffle(deck[0].size());
+    std::vector<int> extra_order = initial_shuffle(deck[1].size());
     for(uint32_t i = 0; i < deck[0].size(); ++i){
+        std::cout << main_order[i] << std::endl;
         OCG_NewCardInfo card{};
 
         card.team = player;
         card.duelist = 0;
-        card.code = deck[0][i];
+        card.code = deck[0][main_order[i]];
         card.con = player;
         card.loc = LOCATION_DECK;
         card.seq = i;
@@ -358,7 +373,7 @@ void load_deck(std::vector<std::vector<uint32_t>> deck, uint32_t player, OCG_Due
 
         card.team = player;
         card.duelist = 0;
-        card.code = deck[1][i];
+        card.code = deck[1][extra_order[i]];
         card.con = player;
         card.loc = LOCATION_EXTRA;
         card.seq = i;
