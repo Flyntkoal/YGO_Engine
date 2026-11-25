@@ -376,22 +376,17 @@ int process_duel(OCG_Duel duel){
     return OCG_DuelProcess(duel);
 }
 
-void get_message(OCG_Duel duel){
+std::vector<uint8_t> get_message(OCG_Duel duel){
     uint32_t length = 0;
 
     auto* message = static_cast<const uint8_t*>(
         OCG_DuelGetMessage(duel, &length)
     );
 
-    if (message && length > 0)
-        {
-            for (uint32_t j = 0; j < length; ++j)
-            {
-                printf("%02X ", message[j]);
-            }
+    if (!message || length == 0)
+        return {};
 
-            printf("\n");
-        }
+    return std::vector<uint8_t>(message, message + length);
 }
 
 void destroy_duel(OCG_Duel duel, DuelContext& context)
