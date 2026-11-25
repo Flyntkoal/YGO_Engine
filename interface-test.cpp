@@ -19,3 +19,19 @@ int main() {
 
     return 0;
 }
+
+void interpret_message(OCG_Duel duel, uint32_t length){
+    auto* message = static_cast<const uint8_t*>(
+        OCG_DuelGetMessage(duel, &length)
+    );
+
+    if (message && length > 0)
+        {
+            for (uint32_t j = 0; j < length; ++j)
+            {
+                printf("%02X ", message[j]);
+            }
+
+            printf("\n");
+        }
+}
